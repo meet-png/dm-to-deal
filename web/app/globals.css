@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ink-950 text-fog font-display antialiased;
+    background-image:
+      radial-gradient(60rem 40rem at 80% -10%, rgba(198, 242, 78, 0.06), transparent 60%),
+      radial-gradient(50rem 40rem at 0% 10%, rgba(94, 131, 255, 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+  ::selection {
+    @apply bg-signal text-ink-950;
+  }
+}
+
+@layer components {
+  .mono-label {
+    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-fog-faint;
+  }
+  .card {
+    @apply rounded-xl border border-ink-700 bg-ink-850/80 backdrop-blur-sm;
+  }
+  .btn-signal {
+    @apply inline-flex items-center gap-2 rounded-md bg-signal px-5 py-2.5 font-medium text-ink-950 transition hover:bg-signal-dim;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 rounded-md border border-ink-700 px-5 py-2.5 font-medium text-fog transition hover:border-fog-faint hover:bg-ink-800;
+  }
+  /* faint dotted grid texture for hero/section backgrounds */
+  .grid-texture {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
