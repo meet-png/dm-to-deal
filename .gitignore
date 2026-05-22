@@ -1,9 +1,18 @@
-# Secrets & credentials — never commit API keys
+# Dependencies & build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Secrets & credentials — NEVER commit these
 .env
 .env.*
+!.env.example
 *.key
+*.pem
 secrets.json
 credentials.json
+service-account*.json
+google-credentials*.json
 
 # OS files
 Thumbs.db
@@ -16,5 +25,7 @@ desktop.ini
 
 # Logs & temp
 *.log
+npm-debug.log*
 _prd_raw.txt
 tmp/
+coverage/
