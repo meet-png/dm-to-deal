@@ -38,20 +38,45 @@ inbound webhook ─▶ Channel.verifyAndParse   (untrusted input: HMAC + schema)
 
 Full design rationale: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
+## Repo layout
+
+```
+.            backend: the agent core + webhook server + read/simulate API (TypeScript)
+└─ web/      frontend: Next.js marketing site + operator dashboard (Tailwind)
+```
+
+The frontend talks to the backend over HTTP. The browser never sees the
+Anthropic key — the in-browser simulator calls the backend, which calls Claude
+server-side (and falls back to a free, scripted demo brain when no key is set,
+so a public deploy is safe).
+
 ## Quickstart
 
 ```bash
 git clone https://github.com/meet-png/dm-to-deal.git
 cd dm-to-deal
 npm install
-cp .env.example .env          # add your ANTHROPIC_API_KEY
+cp .env.example .env          # optional: add ANTHROPIC_API_KEY for the real brain
 
-npm run simulate              # watch a full conversation end-to-end (live brain)
+npm run simulate              # watch a full conversation end-to-end in the terminal
 ```
 
-`npm run simulate` runs a complete lead conversation through the real Claude
-brain with a mock channel and in-memory store — no Instagram/ManyChat/Sheets
-account required. It's the fastest way to see the agent's voice and booking flow.
+`npm run simulate` runs a complete lead conversation through the agent with a
+mock channel and in-memory store — no Instagram/ManyChat/Sheets account required.
+
+### Run the full stack (dashboard + landing page)
+
+```bash
+# terminal 1 — backend API (seeds demo leads, runs in scripted mode w/o a key)
+npm run dev                   # http://localhost:3000
+
+# terminal 2 — Next.js site + dashboard
+cd web && npm install && npm run dev   # http://localhost:3001
+```
+
+Open **http://localhost:3001** for the landing page (with a live in-browser
+agent demo) and **/dashboard** for the operator console — pipeline board,
+conversation viewer, metrics, personality profile, and the simulator.
 
 ## Scripts
 
@@ -83,18 +108,21 @@ account required. It's the fastest way to see the agent's voice and booking flow
 - 🔐 [`SECURITY.md`](./SECURITY.md) — threat model & controls
 - 🗺️ [`docs/ROADMAP.md`](./docs/ROADMAP.md) — what's built / next
 - 🧪 [`docs/no-code-validation.md`](./docs/no-code-validation.md) — the fast validation path
+- 📣 [`docs/marketing.md`](./docs/marketing.md) — launch copy (X + LinkedIn)
 - 🤖 [`CLAUDE.md`](./CLAUDE.md) — guide for working in this repo
 
 ## Tech
 
-TypeScript (strict, ESM) · [`@anthropic-ai/sdk`](https://github.com/anthropics/anthropic-sdk-typescript)
+**Backend:** TypeScript (strict, ESM) · [`@anthropic-ai/sdk`](https://github.com/anthropics/anthropic-sdk-typescript)
 (Claude Opus 4.7, structured outputs, prompt caching) · Express · Zod · Vitest.
+**Frontend:** Next.js (App Router) · React · Tailwind CSS.
 Deliberately small dependency surface to minimize supply-chain risk.
 
 ## Status
 
-`v0.1` — the agent core is complete, tested, and CI-green. Going live on a real
-account (Google Sheets + ManyChat wiring) is Phase 1 on the [roadmap](./docs/ROADMAP.md).
+`v0.1` — agent core + read/simulate API + full-stack dashboard are complete,
+tested, and CI-green. Going live on a real account (Google Sheets + ManyChat
+wiring) is Phase 1 on the [roadmap](./docs/ROADMAP.md).
 
 ## License
 

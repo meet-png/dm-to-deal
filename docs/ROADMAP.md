@@ -13,7 +13,12 @@ Roadmap) but at the engineering level.
 - Compliance `Pacer`: daily send cap + human-like delays
 - Hardened webhook server (HMAC verify, zod validation, rate limit, body cap)
 - `MockChannel` + `MemoryLeadStore` + live conversation simulator
-- Test suite (pacing, signature verification, orchestrator) + CI
+- Read/simulate HTTP API (metrics, leads, transcripts, profile, simulator)
+- Full-stack web app (`web/`): Next.js marketing landing page + operator
+  dashboard (pipeline board, conversation viewer, metrics, personality, live
+  in-browser simulator) in the "Signal" design system
+- Scripted demo brain so the simulator is safe + free to deploy publicly
+- Test suite (pacing, signature verification, orchestrator) + CI (backend + web)
 
 ## 🔜 Phase 1 — go live on one account (PRD weeks 1–2)
 

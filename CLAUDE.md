@@ -39,6 +39,16 @@ inbound webhook ─▶ Channel.verifyAndParse (UNTRUSTED input boundary)
 | Orchestrator | `src/orchestrator.ts` | Ties it together; owns policy glue. |
 | Server | `src/server/app.ts` | Hardened webhook server. |
 
+## Frontend (`web/`)
+
+A separate Next.js (App Router) + Tailwind app — marketing landing page +
+operator dashboard (pipeline, conversation viewer, metrics, personality, live
+simulator). It talks to the backend over HTTP via `NEXT_PUBLIC_API_URL`. Design
+system is "Signal" (near-black + acid-lime `#C6F24E`, Space Grotesk + JetBrains
+Mono) in `web/tailwind.config.ts`. The browser never holds the API key — the
+simulator calls the backend, which calls Claude (or the scripted demo brain).
+Run with `cd web && npm run dev` (port 3001) alongside the backend (port 3000).
+
 ## Conventions
 
 - **ESM + strict TypeScript.** Imports use `.js` extensions (NodeNext-style).
