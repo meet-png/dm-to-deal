@@ -1,0 +1,41 @@
+# Roadmap
+
+Tracks what's built, what's stubbed, and what's next. Mirrors PRD §10 (Build
+Roadmap) but at the engineering level.
+
+## ✅ Done — the agent core (this repo, v0.1)
+
+- Domain model + pluggable `Channel` / `LeadStore` / `BookingProvider` interfaces
+- `AgentBrain`: Claude `claude-opus-4-7`, structured outputs, prompt caching
+- Personality engine (system-prompt builder from a `PersonalityProfile`)
+- Orchestrator: full turn loop (open / reply / nudge), booking-link injection,
+  STOP/compliance handling, stage transitions
+- Compliance `Pacer`: daily send cap + human-like delays
+- Hardened webhook server (HMAC verify, zod validation, rate limit, body cap)
+- `MockChannel` + `MemoryLeadStore` + live conversation simulator
+- Test suite (pacing, signature verification, orchestrator) + CI
+
+## 🔜 Phase 1 — go live on one account (PRD weeks 1–2)
+
+- [ ] Implement `SheetsLeadStore` against the Google Sheets API
+      (least-privilege service account, single spreadsheet)
+- [ ] Finish the ManyChat send payload against a real ManyChat flow + verify the
+      exact inbound webhook shape; adjust `InboundSchema` to match
+- [ ] Per-influencer profile loading (config or DB) instead of the hard-coded example
+- [ ] A scheduled "nudge" job: scan `staleLeads()` and send one soft follow-up
+- [ ] Deploy to a free tier (Railway / Render / Fly) with env-based secrets
+
+## 🔭 Phase 2 — prove + harden (PRD weeks 3–4)
+
+- [ ] Conversation analytics: capture rate, reply rate, booking rate (PRD §11)
+- [ ] Move rate-limit + daily-cap state to Redis (multi-instance safe)
+- [ ] Dependency + secret scanning in CI (npm audit / Dependabot / gitleaks)
+- [ ] Structured eval harness for reply quality + objection handling
+
+## 🚀 Phase 3 — productize + scale (PRD month 2+)
+
+- [ ] Direct Meta Graph API channel (cut ManyChat cost at scale)
+- [ ] Multi-tenant: one deployment, many influencers, isolated profiles + creds
+- [ ] Self-serve onboarding questionnaire → `PersonalityProfile`
+- [ ] Airtable/Postgres CRM for thousands of concurrent leads
+- [ ] Payment tracking (Stripe) for automatic revenue attribution
