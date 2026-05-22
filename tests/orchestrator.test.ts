@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { AgentBrain, BrainResult } from "../src/agent/brain.js";
+import type { Brain, BrainResult } from "../src/agent/brain.js";
 import type { AgentDecision } from "../src/agent/decision.schema.js";
 import { CalendlyLink } from "../src/booking/calendly.js";
 import { MockChannel } from "../src/channels/mock.js";
@@ -10,7 +10,7 @@ import { Orchestrator } from "../src/orchestrator.js";
 const ZERO_DELAY = { minDelaySeconds: 0, maxDelaySeconds: 0, maxMessagesPerDay: 100 };
 
 /** A scripted brain that returns the decisions you queue, in order. */
-function scriptedBrain(decisions: AgentDecision[]): AgentBrain {
+function scriptedBrain(decisions: AgentDecision[]): Brain {
   let i = 0;
   const run = async (): Promise<BrainResult> => {
     const decision = decisions[Math.min(i++, decisions.length - 1)]!;
@@ -24,7 +24,7 @@ function scriptedBrain(decisions: AgentDecision[]): AgentBrain {
       },
     };
   };
-  return { run } as unknown as AgentBrain;
+  return { run };
 }
 
 function harness(decisions: AgentDecision[]) {

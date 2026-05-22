@@ -14,4 +14,6 @@ export interface LeadStore {
   update(lead: Lead): Promise<Lead>;
   /** Leads with no activity since `before`, used to drive nudges. */
   staleLeads(before: Date): Promise<Lead[]>;
+  /** A snapshot of every lead — used for the dashboard metrics + pipeline. */
+  all(): Promise<Lead[]>;
 }

@@ -27,11 +27,20 @@ export interface BrainResult {
 }
 
 /**
+ * The reasoning contract. The orchestrator depends on this, not on the
+ * concrete Claude implementation — so a scripted demo brain (no API key)
+ * can be swapped in for the in-browser simulator and tests.
+ */
+export interface Brain {
+  run(lead: Lead, turn: Turn): Promise<BrainResult>;
+}
+
+/**
  * The reasoning core. Wraps one Claude call per turn and returns a validated,
  * structured decision. The influencer's personality is sent as a cacheable
  * system prefix; per-lead context + transcript are sent as the volatile suffix.
  */
-export class AgentBrain {
+export class AgentBrain implements Brain {
   private readonly client: Anthropic;
   private readonly systemPrompt: string;
 

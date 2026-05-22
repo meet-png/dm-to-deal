@@ -54,6 +54,10 @@ export class MemoryLeadStore implements LeadStore {
     );
   }
 
+  async all(): Promise<Lead[]> {
+    return [...this.byHandle.values()];
+  }
+
   private requireLead(igHandle: string): Lead {
     const lead = this.byHandle.get(igHandle.toLowerCase());
     if (!lead) throw new Error(`No lead for handle: ${igHandle}`);

@@ -64,6 +64,8 @@ export interface Lead {
   lastMessageAt: string;
   /** Set once the agent sends a booking link, so we don't double-send. */
   bookingLinkSentAt?: string;
+  /** Revenue attributed to this lead once Won (PRD §7.3). */
+  revenue?: number;
 }
 
 /** A brand-new lead captured from a comment/keyword, before the first DM. */

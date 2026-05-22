@@ -49,4 +49,7 @@ export class SheetsLeadStore implements LeadStore {
   async staleLeads(_before: Date): Promise<Lead[]> {
     return this.notImplemented();
   }
+  async all(): Promise<Lead[]> {
+    return this.notImplemented();
+  }
 }

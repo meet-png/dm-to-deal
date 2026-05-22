@@ -1,4 +1,4 @@
-import type { AgentBrain, Turn } from "./agent/brain.js";
+import type { Brain, Turn } from "./agent/brain.js";
 import type { BookingProvider } from "./booking/calendly.js";
 import type { Channel } from "./channels/types.js";
 import type { Pacer } from "./compliance/pacing.js";
@@ -15,7 +15,7 @@ import { log } from "./lib/logger.js";
  */
 export class Orchestrator {
   constructor(
-    private readonly brain: AgentBrain,
+    private readonly brain: Brain,
     private readonly store: LeadStore,
     private readonly channel: Channel,
     private readonly booking: BookingProvider,

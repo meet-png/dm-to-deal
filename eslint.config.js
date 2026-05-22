@@ -24,6 +24,7 @@ export default [
     },
   },
   {
-    ignores: ["dist/**", "node_modules/**"],
+    // web/ is a separate Next.js project with its own linter (`next lint`).
+    ignores: ["dist/**", "node_modules/**", "web/**"],
   },
 ];

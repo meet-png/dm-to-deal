@@ -5,7 +5,17 @@ import { z } from "zod";
  * vars are missing or malformed — never discover it mid-conversation.
  */
 const EnvSchema = z.object({
-  ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required"),
+  // Optional: when absent, the agent runs in scripted demo mode (no API
+  // calls, no cost) — which is what makes the public simulator safe to expose.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+
+  // Seed a few example leads at boot so the dashboard is populated for demos.
+  DM_SEED_DEMO: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
+  // CORS allow-list for the dashboard origin(s), comma-separated.
+  DM_CORS_ORIGINS: z.string().default("http://localhost:3001"),
 
   DM_MODEL: z.string().default("claude-opus-4-7"),
   DM_EFFORT: z.enum(["low", "medium", "high", "max"]).default("low"),
