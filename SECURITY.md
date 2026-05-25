@@ -77,8 +77,10 @@ also bounds the blast radius of any logic error (the agent can't spray messages)
 
 - The in-memory rate limiter and daily cap are per-process; a multi-instance
   deployment needs a shared store (Redis). Tracked in `docs/ROADMAP.md`.
-- `SheetsLeadStore` is a skeleton; when implemented it must use a
-  least-privilege service account scoped to a single spreadsheet.
+- `SheetsLeadStore` writes with `valueInputOption=RAW` and additionally defangs
+  leading `= + - @` characters in user-controlled cells — combined, these block
+  formula-injection from a lead's DM. The service-account JWT is scoped to the
+  Sheets API only (no Drive). See [`docs/SHEETS_SETUP.md`](./docs/SHEETS_SETUP.md).
 - Add dependency scanning (`npm audit` / Dependabot) and secret scanning in CI.
 
 ## Dependencies

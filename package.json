@@ -16,7 +16,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "simulate": "tsx scripts/simulate-conversation.ts"
+    "simulate": "tsx scripts/simulate-conversation.ts",
+    "sheets:init": "tsx scripts/init-sheet.ts"
   },
   "keywords": [
     "ai",

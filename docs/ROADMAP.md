@@ -22,8 +22,9 @@ Roadmap) but at the engineering level.
 
 ## 🔜 Phase 1 — go live on one account (PRD weeks 1–2)
 
-- [ ] Implement `SheetsLeadStore` against the Google Sheets API
-      (least-privilege service account, single spreadsheet)
+- [x] Implement `SheetsLeadStore` against the Google Sheets API
+      (least-privilege service account, single spreadsheet) — see [`SHEETS_SETUP.md`](./SHEETS_SETUP.md)
+- [x] Premium spreadsheet provisioning (`npm run sheets:init`) — branded Dashboard, validation, conditional formatting
 - [ ] Finish the ManyChat send payload against a real ManyChat flow + verify the
       exact inbound webhook shape; adjust `InboundSchema` to match
 - [ ] Per-influencer profile loading (config or DB) instead of the hard-coded example
