@@ -14,12 +14,31 @@ export default function OverviewPage() {
   const [offline, setOffline] = useState(false);
 
   useEffect(() => {
-    Promise.all([api.metrics(), api.leads()])
-      .then(([m, l]) => {
+    let cancelled = false;
+    let failures = 0;
+
+    async function refresh(initial: boolean) {
+      try {
+        const [m, l] = await Promise.all([api.metrics(), api.leads()]);
+        if (cancelled) return;
         setMetrics(m);
         setLeads(l);
-      })
-      .catch(() => setOffline(true));
+        setOffline(false);
+        failures = 0;
+      } catch {
+        // Only flip to offline on the initial load or after several misses —
+        // one transient hiccup during polling shouldn't blank the dashboard.
+        if (initial) setOffline(true);
+        if (++failures >= 3) setOffline(true);
+      }
+    }
+
+    void refresh(true);
+    const id = setInterval(() => void refresh(false), 3_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, []);
 
   async function openLead(handle: string) {
@@ -29,6 +48,22 @@ export default function OverviewPage() {
       setOffline(true);
     }
   }
+
+  // If a lead is selected, keep its transcript fresh — sim conversations
+  // animate in there in real time too.
+  useEffect(() => {
+    if (!selected) return;
+    const handle = selected.igHandle;
+    const id = setInterval(async () => {
+      try {
+        const fresh = await api.lead(handle);
+        setSelected(fresh);
+      } catch {
+        /* leave previous content; polling will retry */
+      }
+    }, 3_000);
+    return () => clearInterval(id);
+  }, [selected?.igHandle]);
 
   if (offline) return <Offline />;
 
