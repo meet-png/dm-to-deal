@@ -59,9 +59,28 @@ export interface Profile {
   leadMagnet: string;
 }
 
+/** A single agent bubble — text + how long "typing…" should hover before it. */
+export interface SimBubble {
+  text: string;
+  typingMs: number;
+}
+
 export interface SimTurn {
   sessionId: string;
   transcript: TranscriptMessage[];
   stage: Stage;
   sentiment: Sentiment;
+  /** New bubbles emitted this turn — the UI animates these in. */
+  bursts: SimBubble[];
+  /** Current conversation-graph node id (e.g. "OBJ_PRICING"). */
+  nodeId: string | null;
+  /** Conversation reached Booked / Lost. */
+  terminal: boolean;
+  /** Classified intent for the last lead reply, or null on session start. */
+  intent: string | null;
+  /** Handle for this lead — equals "sim_lead" for sandboxed, "sim_<hex>" for persisted. */
+  handle: string;
+  /** Plausible quick replies the lead might send next. Comes from the engine,
+   *  changes after every assistant turn. UI must NOT hardcode these. */
+  suggestions: string[];
 }

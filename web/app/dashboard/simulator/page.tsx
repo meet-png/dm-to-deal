@@ -12,8 +12,14 @@ export default function SimulatorPage() {
         </p>
       </header>
       <div className="max-w-2xl">
-        <Simulator />
+        {/* Operator dashboard → persist=true so the live conversation
+            shows up on the pipeline board in real time. */}
+        <Simulator persist />
       </div>
+      <p className="mt-4 max-w-2xl text-xs text-fog-faint">
+        Tip: open the <a href="/dashboard" className="text-signal hover:underline">overview</a> in a
+        second tab and watch the lead move through the pipeline as you reply.
+      </p>
     </div>
   );
 }

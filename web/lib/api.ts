@@ -27,7 +27,8 @@ export const api = {
   leads: () => get<LeadSummary[]>("/api/leads"),
   lead: (handle: string) => get<LeadDetail>(`/api/leads/${encodeURIComponent(handle)}`),
   profile: () => get<Profile>("/api/profile"),
-  simulateStart: () => post<SimTurn>("/api/simulate/start", {}),
+  simulateStart: (opts: { persist?: boolean } = {}) =>
+    post<SimTurn>("/api/simulate/start", opts),
   simulateMessage: (sessionId: string, text: string) =>
     post<SimTurn>("/api/simulate/message", { sessionId, text }),
 };
