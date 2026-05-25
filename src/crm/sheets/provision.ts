@@ -57,7 +57,18 @@ export async function provisionSpreadsheet(
     meta = await client.getSpreadsheet(spreadsheetId);
   }
 
-  // 2. Per-tab formatting + content. Each helper returns its requests so we
+  // 2. Idempotency reset — drop any existing bandings and conditional format
+  //    rules on the tabs we own. `addBanding` rejects overlap and
+  //    `addConditionalFormatRule` appends, so without this step a re-run
+  //    would either error or stack duplicate rules.
+  const resets = buildResetRequests(meta);
+  if (resets.length > 0) {
+    await client.batchUpdateSpreadsheet(spreadsheetId, resets);
+    // Re-fetch so subsequent helpers see the clean state.
+    meta = await client.getSpreadsheet(spreadsheetId);
+  }
+
+  // 3. Per-tab formatting + content. Each helper returns its requests so we
   //    can batch them into one round-trip for atomicity + speed.
   const requests: BatchUpdateRequest[] = [
     ...formatLeadsTab(meta),
@@ -70,6 +81,29 @@ export async function provisionSpreadsheet(
   if (requests.length > 0) {
     await client.batchUpdateSpreadsheet(spreadsheetId, requests);
   }
+}
+
+/**
+ * Build delete requests for every banding and conditional format rule on the
+ * tabs we own. Conditional rules are deleted by index — and indices shift as
+ * earlier rules are removed — so we emit them in descending index order to
+ * keep the batch correct.
+ */
+function buildResetRequests(meta: SpreadsheetMeta): BatchUpdateRequest[] {
+  const ourTitles = new Set<string>([TAB.DASHBOARD, TAB.LEADS, TAB.BOOKINGS, TAB.REVENUE]);
+  const out: BatchUpdateRequest[] = [];
+  for (const sheet of meta.sheets) {
+    if (!ourTitles.has(sheet.properties.title)) continue;
+    const sheetId = sheet.properties.sheetId;
+    for (const band of sheet.bandedRanges ?? []) {
+      out.push({ deleteBanding: { bandedRangeId: band.bandedRangeId } });
+    }
+    const cfCount = (sheet.conditionalFormats ?? []).length;
+    for (let i = cfCount - 1; i >= 0; i--) {
+      out.push({ deleteConditionalFormatRule: { sheetId, index: i } });
+    }
+  }
+  return out;
 }
 
 // ── Leads tab ────────────────────────────────────────────────────────────

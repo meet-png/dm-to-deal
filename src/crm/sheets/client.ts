@@ -54,6 +54,11 @@ export interface SpreadsheetMeta {
       hidden?: boolean;
       gridProperties?: { rowCount?: number; columnCount?: number; frozenRowCount?: number };
     };
+    /** Alternating-row formatting on the sheet. `addBanding` rejects overlap. */
+    bandedRanges?: Array<{ bandedRangeId: number }>;
+    /** Conditional format rules — `addConditionalFormatRule` appends, so we
+     *  must delete existing ones before re-provisioning to stay idempotent. */
+    conditionalFormats?: unknown[];
   }>;
 }
 
