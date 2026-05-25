@@ -28,7 +28,15 @@ const EnvSchema = z.object({
   MANYCHAT_WEBHOOK_SECRET: z.string().optional(),
 
   DM_STORE: z.enum(["memory", "sheets"]).default("memory"),
-  GOOGLE_SHEETS_ID: z.string().optional(),
+  // Google Sheets ID is the 44-char token in the spreadsheet URL.
+  // Constrained character set blocks accidental URL pastes (we want the ID only).
+  GOOGLE_SHEETS_ID: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{20,80}$/, "GOOGLE_SHEETS_ID must be the spreadsheet ID, not a URL")
+    .optional(),
+  // Accepts either a path to a service-account JSON file (`./creds.json`) or the
+  // JSON content itself (for cloud deploys with no writable filesystem). The
+  // sheets/auth module disambiguates by inspecting the first non-whitespace char.
   GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
 
   CALENDLY_BOOKING_URL: z

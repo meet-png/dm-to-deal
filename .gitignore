@@ -23,6 +23,9 @@ desktop.ini
 .vscode/
 .idea/
 
+# Claude Code — user-local settings (per-developer permissions allowlist)
+.claude/settings.local.json
+
 # Logs & temp
 *.log
 npm-debug.log*
