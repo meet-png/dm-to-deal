@@ -71,6 +71,12 @@ export function buildApp(env: Env, profile: PersonalityProfile) {
     maxMessagesPerDay: env.DM_MAX_MESSAGES_PER_DAY,
   });
   const orchestrator = new Orchestrator(brain, store, channel, booking, pacer);
-  const simulator = new SimulatorService(brain, env.CALENDLY_BOOKING_URL);
+  // The simulator runs its own graph-based engine (deterministic, key-less) —
+  // it doesn't share the brain. Passing `store` here lets the operator
+  // dashboard's "live conversation" feature persist sim leads in real time.
+  const simulator = new SimulatorService({
+    bookingUrl: env.CALENDLY_BOOKING_URL,
+    store,
+  });
   return { orchestrator, store, channel, simulator };
 }

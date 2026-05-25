@@ -20,6 +20,13 @@ const SimMessageSchema = z.object({
   text: z.string().min(1).max(2000),
 });
 
+const SimStartSchema = z.object({
+  /** Opt-in: write the sim conversation to the real lead store so the
+   *  dashboard pipeline animates in real time. Used by the operator
+   *  dashboard's Simulator; the public landing-page Simulator omits it. */
+  persist: z.boolean().optional(),
+});
+
 /**
  * Read + simulate API consumed by the dashboard. Read endpoints are safe to
  * expose; the simulate endpoints are validated and rate-limited (anti-abuse).
@@ -62,9 +69,24 @@ export function createApiRouter(deps: ApiDeps): Router {
     res.json(deps.profile);
   });
 
-  router.post("/simulate/start", simLimiter, async (_req, res) => {
-    const turn = await deps.simulator.start();
-    res.json(turn);
+  // Tighter limit on persisted sessions — they write to the real store, so
+  // we throttle harder. Sandboxed (default) sessions use `simLimiter` only.
+  const persistLimiter = makeRateLimiter({ windowMs: 60 * 60_000, max: 10 });
+  router.post("/simulate/start", simLimiter, async (req: Request, res: Response) => {
+    const parsed = SimStartSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return res.status(400).json({ error: "invalid request" });
+    const persist = parsed.data.persist === true;
+    const runStart = async () => {
+      try {
+        const turn = await deps.simulator.start({ persist });
+        res.json(turn);
+      } catch (err) {
+        log.error("simulate.start.failed", { reason: err instanceof Error ? err.message : "?" });
+        res.status(500).json({ error: "simulation failed" });
+      }
+    };
+    if (persist) return persistLimiter(req, res, runStart);
+    return runStart();
   });
 
   router.post("/simulate/message", simLimiter, async (req: Request, res: Response) => {
