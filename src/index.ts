@@ -1,3 +1,7 @@
+// Load `.env` before any module that touches `process.env`. The side-effect
+// import is intentional — it must run first.
+import "dotenv/config";
+
 import { seedDemoLeads } from "./api/seed.js";
 import { loadEnv } from "./config/env.js";
 import { buildApp } from "./factory.js";

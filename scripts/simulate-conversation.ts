@@ -7,6 +7,8 @@
  *
  * The "lead" replies are scripted to mimic a warm fitness prospect.
  */
+import "dotenv/config";
+
 import { AgentBrain } from "../src/agent/brain.js";
 import { CalendlyLink } from "../src/booking/calendly.js";
 import { MockChannel } from "../src/channels/mock.js";

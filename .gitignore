@@ -13,6 +13,12 @@ secrets.json
 credentials.json
 service-account*.json
 google-credentials*.json
+# Google Cloud's default download name is <project-id>-<hash>.json, which
+# doesn't match the patterns above. Catch the project-specific pattern and
+# Firebase admin SDK keys explicitly.
+dm-to-deal-*.json
+*-firebase-adminsdk-*.json
+*-service-account-*.json
 
 # OS files
 Thumbs.db

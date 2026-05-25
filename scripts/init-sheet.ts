@@ -14,6 +14,10 @@
  * "DM-to-Deal · Pipeline" and prints its ID + share URL.
  */
 
+// Load `.env` BEFORE any code that reads `process.env`. The side-effect
+// import is intentional — it has to run first, before our config module.
+import "dotenv/config";
+
 import { loadEnv } from "../src/config/env.js";
 import { authFromEnv } from "../src/crm/sheets/auth.js";
 import { SheetsClient } from "../src/crm/sheets/client.js";
@@ -23,13 +27,26 @@ async function main(): Promise<void> {
   const env = loadEnv();
   if (!env.GOOGLE_SERVICE_ACCOUNT_JSON) {
     fail(
-      "GOOGLE_SERVICE_ACCOUNT_JSON is required. Set it to a file path " +
-        "(e.g. ./creds.json) or paste the JSON content inline.",
+      "GOOGLE_SERVICE_ACCOUNT_JSON is required. Set it in .env or as a " +
+        "shell env var (file path OR inline JSON).",
     );
   }
 
+  // Diagnostics — print what we actually loaded, so a 403 or "wrong sheet"
+  // is debuggable without spelunking. We redact credential content; only
+  // its presence + the service-account email (which is meant to be shared)
+  // are shown.
+  log("─ environment ──────────────────────────────────────────────");
+  log(`  GOOGLE_SHEETS_ID            : ${env.GOOGLE_SHEETS_ID ?? "(unset → will create new)"}`);
+  log(`  GOOGLE_SERVICE_ACCOUNT_JSON : ${describeCredSource(env.GOOGLE_SERVICE_ACCOUNT_JSON)}`);
+  log("");
+
   const { jwt, clientEmail } = await authFromEnv(env.GOOGLE_SERVICE_ACCOUNT_JSON);
   const client = new SheetsClient(jwt);
+
+  log(`  service-account email       : ${clientEmail}`);
+  log("─────────────────────────────────────────────────────────────");
+  log("");
 
   let spreadsheetId = env.GOOGLE_SHEETS_ID;
   if (!spreadsheetId) {
@@ -46,7 +63,27 @@ async function main(): Promise<void> {
   }
 
   log(`provisioning spreadsheet: ${spreadsheetId}`);
-  await provisionSpreadsheet(client, spreadsheetId);
+  try {
+    await provisionSpreadsheet(client, spreadsheetId);
+  } catch (err) {
+    // The most common failure here is 403 — the service account doesn't have
+    // access to the spreadsheet. Translate that to actionable next-steps.
+    const msg = (err as Error).message;
+    if (msg.includes("403") || msg.toLowerCase().includes("permission")) {
+      log("");
+      log("✗ Google Sheets returned 403 — the service account can't see this sheet.");
+      log("");
+      log("  Open the sheet in your browser and click Share. Add this email");
+      log("  as an Editor, then re-run:");
+      log("");
+      log(`      ${clientEmail}`);
+      log("");
+      log("  Also verify the GOOGLE_SHEETS_ID in .env matches the spreadsheet");
+      log("  ID in the URL (the long token between /d/ and /edit).");
+      log("");
+    }
+    throw err;
+  }
   log("");
   log("✓ done — open it:");
   log(`  https://docs.google.com/spreadsheets/d/${spreadsheetId}`);
@@ -55,6 +92,14 @@ async function main(): Promise<void> {
   log(`  ${clientEmail}`);
   log("");
   log("Then set DM_STORE=sheets in your .env and the agent will use it.");
+}
+
+/** Describe the credential source without leaking its content. */
+function describeCredSource(source: string | undefined): string {
+  if (!source) return "(unset)";
+  const trimmed = source.trimStart();
+  if (trimmed.startsWith("{")) return `inline JSON (${trimmed.length} chars)`;
+  return `path → ${source}`;
 }
 
 function log(line: string): void {
