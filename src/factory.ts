@@ -40,7 +40,7 @@ export function makeStore(env: Env): LeadStore {
     }
     return new SheetsLeadStore({
       spreadsheetId: env.GOOGLE_SHEETS_ID,
-      serviceAccountJsonPath: env.GOOGLE_SERVICE_ACCOUNT_JSON,
+      serviceAccountSource: env.GOOGLE_SERVICE_ACCOUNT_JSON,
     });
   }
   return new MemoryLeadStore();
