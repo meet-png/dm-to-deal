@@ -1,17 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import type { LeadDetail, LeadSummary, Metrics, Stage } from "@/lib/types";
-import { SentimentDot, StageBadge } from "@/components/Badges";
+import { StageBadge } from "@/components/Badges";
+import { PersonaSwitcher } from "@/components/PersonaSwitcher";
+import { useActivePersona } from "@/lib/use-active-persona";
+import { LeadCard } from "@/components/LeadCard";
+import { MetricTile } from "@/components/MetricTile";
+import { RevenueTile } from "@/components/RevenueTile";
+import { ConversationView } from "@/components/ConversationView";
 
 const PIPELINE: Stage[] = ["New", "Engaged", "Qualifying", "Objection", "BookingSent", "Booked", "Won"];
 
 export default function OverviewPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [leads, setLeads] = useState<LeadSummary[]>([]);
+  const [realLeads, setRealLeads] = useState<LeadSummary[]>([]);
   const [selected, setSelected] = useState<LeadDetail | null>(null);
   const [offline, setOffline] = useState(false);
+  const [lastTickAt, setLastTickAt] = useState<Date | null>(null);
+  const { persona, enabled: demoEnabled } = useActivePersona();
 
   useEffect(() => {
     let cancelled = false;
@@ -22,12 +30,11 @@ export default function OverviewPage() {
         const [m, l] = await Promise.all([api.metrics(), api.leads()]);
         if (cancelled) return;
         setMetrics(m);
-        setLeads(l);
+        setRealLeads(l);
         setOffline(false);
+        setLastTickAt(new Date());
         failures = 0;
       } catch {
-        // Only flip to offline on the initial load or after several misses —
-        // one transient hiccup during polling shouldn't blank the dashboard.
         if (initial) setOffline(true);
         if (++failures >= 3) setOffline(true);
       }
@@ -41,7 +48,43 @@ export default function OverviewPage() {
     };
   }, []);
 
+  const leads = useMemo<LeadSummary[]>(() => {
+    if (!demoEnabled) return realLeads;
+    const realHandles = new Set(realLeads.map((l) => l.igHandle));
+    const demos = persona.leads.filter((l) => !realHandles.has(l.igHandle));
+    return [...demos, ...realLeads].sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt));
+  }, [demoEnabled, persona, realLeads]);
+
+  const view = useMemo(() => {
+    const base = metrics ?? (demoEnabled ? zeroMetrics() : null);
+    if (!base) return null;
+    const demoLeadsCount = demoEnabled ? persona.leads.length : 0;
+    const totalLeads = base.totalLeads + demoLeadsCount;
+    const byStage: Record<Stage, number> = { ...base.byStage };
+    if (demoEnabled) {
+      for (const l of persona.leads) byStage[l.stage] += 1;
+    }
+    const booked = byStage.BookingSent + byStage.Booked + byStage.Won;
+    const won = byStage.Won;
+    return {
+      totalLeads,
+      bookingRate: pct(booked, totalLeads),
+      winRate: pct(won, booked),
+      realRevenue: base.totalRevenue,
+      simulatedRevenue: demoEnabled
+        ? persona.leads.reduce((sum, l) => sum + (l.revenue ?? 0), 0)
+        : 0,
+    };
+  }, [metrics, demoEnabled, persona]);
+
   async function openLead(handle: string) {
+    if (handle.startsWith("demo_")) {
+      const detail = persona.transcripts[handle];
+      if (detail) {
+        setSelected(detail);
+        return;
+      }
+    }
     try {
       setSelected(await api.lead(handle));
     } catch {
@@ -49,10 +92,9 @@ export default function OverviewPage() {
     }
   }
 
-  // If a lead is selected, keep its transcript fresh — sim conversations
-  // animate in there in real time too.
   useEffect(() => {
     if (!selected) return;
+    if (selected.igHandle.startsWith("demo_")) return;
     const handle = selected.igHandle;
     const id = setInterval(async () => {
       try {
@@ -65,53 +107,91 @@ export default function OverviewPage() {
     return () => clearInterval(id);
   }, [selected?.igHandle]);
 
-  if (offline) return <Offline />;
+  useEffect(() => {
+    if (selected?.igHandle.startsWith("demo_") && !persona.transcripts[selected.igHandle]) {
+      setSelected(null);
+    }
+  }, [persona, selected?.igHandle]);
+
+  if (offline && !demoEnabled) return <Offline />;
+
+  const trends = demoEnabled ? persona.trends : null;
+  const activeStage = selected?.stage ?? null;
 
   return (
-    <div className="space-y-8">
-      <header className="flex items-center justify-between">
+    <div className="space-y-10">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="mono-label">overview</p>
-          <h1 className="mt-1 font-display text-2xl font-semibold text-fog">Pipeline & performance</h1>
+          <h1 className="mt-1 font-display text-2xl font-semibold text-fog">
+            Pipeline & performance
+          </h1>
         </div>
-        <span className="mono-label flex items-center gap-2">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-signal" /> live
-        </span>
+        <div className="flex items-center gap-4">
+          <PersonaSwitcher />
+          <LiveIndicator lastTickAt={lastTickAt} offline={offline} />
+        </div>
       </header>
 
-      {/* metric cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Total leads" value={metrics ? String(metrics.totalLeads) : "—"} />
-        <Metric label="Booking rate" value={metrics ? `${metrics.bookingRate}%` : "—"} accent />
-        <Metric label="Win rate" value={metrics ? `${metrics.winRate}%` : "—"} />
-        <Metric label="Revenue" value={metrics ? `$${metrics.totalRevenue.toLocaleString()}` : "—"} accent />
+      {/* KPI tiles — revenue dominant (col-span-2 on lg) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="lg:col-span-2">
+          <RevenueTile
+            real={view?.realRevenue ?? null}
+            simulated={view?.simulatedRevenue ?? 0}
+            spark={trends?.revenueSpark}
+            delta={trends?.revenueDelta}
+            dominant
+          />
+        </div>
+        <MetricTile
+          label="Total leads"
+          value={view ? String(view.totalLeads) : "—"}
+          delta={trends?.totalLeadsDelta}
+          spark={trends?.totalLeadsSpark}
+        />
+        <MetricTile
+          label="Booking rate"
+          value={view ? `${view.bookingRate}%` : "—"}
+          delta={trends?.bookingRateDelta}
+          spark={trends?.bookingRateSpark}
+          accent
+        />
+        <MetricTile
+          label="Win rate"
+          value={view ? `${view.winRate}%` : "—"}
+          delta={trends?.winRateDelta}
+          spark={trends?.winRateSpark}
+        />
       </div>
 
-      {/* pipeline board */}
       <section>
-        <p className="mono-label mb-3">pipeline</p>
+        <p className="mono-label mb-4">pipeline</p>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
           {PIPELINE.map((stage) => {
             const inStage = leads.filter((l) => l.stage === stage);
+            const active = stage === activeStage;
+            const laneClass = active
+              ? "bg-ink-900/70 ring-1 ring-signal/15"
+              : "bg-ink-900/40 ring-1 ring-ink-700/30";
             return (
-              <div key={stage} className="card min-h-[120px] p-3">
-                <div className="flex items-center justify-between">
+              <div key={stage} className={`rounded-lg p-2.5 ${laneClass}`}>
+                <div className="mb-2.5 flex items-baseline justify-between px-0.5">
                   <StageBadge stage={stage} />
-                  <span className="font-mono text-xs text-fog-faint">{inStage.length}</span>
+                  {inStage.length > 0 && (
+                    <span className="font-mono text-[10px] text-fog-faint/70">
+                      {inStage.length}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-3 space-y-2">
+                <div className="space-y-1.5">
                   {inStage.map((l) => (
-                    <button
+                    <LeadCard
                       key={l.id}
+                      lead={l}
+                      selected={selected?.igHandle === l.igHandle}
                       onClick={() => openLead(l.igHandle)}
-                      className="w-full rounded-md border border-ink-700 bg-ink-900/60 px-2.5 py-2 text-left text-xs transition hover:border-signal/40"
-                    >
-                      <div className="truncate text-fog">@{l.igHandle}</div>
-                      <div className="mt-1 flex items-center justify-between">
-                        <SentimentDot sentiment={l.sentiment} />
-                        {l.revenue ? <span className="font-mono text-signal">${l.revenue}</span> : null}
-                      </div>
-                    </button>
+                    />
                   ))}
                 </div>
               </div>
@@ -120,55 +200,76 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      {/* conversation viewer */}
       <section>
-        <p className="mono-label mb-3">conversation viewer</p>
+        <div className="mb-4 flex items-baseline justify-between">
+          <p className="mono-label">conversation</p>
+          {selected && (
+            <span className="font-mono text-[10.5px] uppercase tracking-wider text-fog-faint">
+              inspecting
+            </span>
+          )}
+        </div>
         {!selected ? (
-          <div className="card p-6 text-sm text-fog-faint">Select a lead above to read the transcript.</div>
-        ) : (
-          <div className="card p-5">
-            <div className="flex items-center justify-between border-b border-ink-700 pb-3">
-              <div>
-                <p className="font-display text-fog">@{selected.igHandle}</p>
-                <p className="mono-label mt-0.5">{selected.sourceContent ?? "source unknown"}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <SentimentDot sentiment={selected.sentiment} />
-                <StageBadge stage={selected.stage} />
-              </div>
-            </div>
-            <div className="mt-4 space-y-3">
-              {selected.transcript.length === 0 && (
-                <p className="text-sm text-fog-faint">No messages yet.</p>
-              )}
-              {selected.transcript.map((m, i) => (
-                <div key={i} className={`flex ${m.role === "agent" ? "justify-start" : "justify-end"}`}>
-                  <div
-                    className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${
-                      m.role === "agent"
-                        ? "rounded-tl-sm border border-ink-700 bg-ink-800 text-fog"
-                        : "rounded-tr-sm bg-signal/15 text-fog"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="rounded-lg bg-ink-900/40 px-6 py-10 text-center text-sm text-fog-faint ring-1 ring-ink-700/30">
+            Select a lead above to read the transcript.
           </div>
+        ) : (
+          <ConversationView lead={selected} />
         )}
       </section>
     </div>
   );
 }
 
-function Metric({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function LiveIndicator({ lastTickAt, offline }: { lastTickAt: Date | null; offline: boolean }) {
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const ago = lastTickAt ? Math.max(0, Math.round((now.getTime() - lastTickAt.getTime()) / 1000)) : null;
+  const stale = ago !== null && ago > 8;
+  const color = offline || stale ? "bg-warm" : "bg-signal";
+  const label = offline
+    ? "offline"
+    : ago === null
+      ? "connecting"
+      : ago <= 3
+        ? "live"
+        : `${ago}s`;
+
   return (
-    <div className="card p-5">
-      <p className="mono-label">{label}</p>
-      <p className={`mt-2 font-mono text-3xl ${accent ? "text-signal" : "text-fog"}`}>{value}</p>
-    </div>
+    <span className="flex items-center gap-1.5 font-mono text-[10.5px] uppercase tracking-wider text-fog-faint">
+      <span className={`h-1.5 w-1.5 animate-pulse rounded-full ${color}`} />
+      {label}
+    </span>
   );
+}
+
+function pct(part: number, whole: number): number {
+  return whole === 0 ? 0 : Math.round((part / whole) * 1000) / 10;
+}
+
+function zeroMetrics(): Metrics {
+  return {
+    totalLeads: 0,
+    byStage: {
+      New: 0,
+      Engaged: 0,
+      Qualifying: 0,
+      Objection: 0,
+      BookingSent: 0,
+      Booked: 0,
+      Won: 0,
+      Lost: 0,
+    },
+    replyRate: 0,
+    bookingRate: 0,
+    winRate: 0,
+    totalRevenue: 0,
+    revenuePerLead: 0,
+  };
 }
 
 function Offline() {
@@ -178,8 +279,7 @@ function Offline() {
       <h2 className="mt-3 font-display text-xl text-fog">Start the API to load live data</h2>
       <p className="mt-3 text-sm text-fog-muted">
         Run <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-signal">npm run dev</code> in
-        the project root (port 3000), then refresh. The dashboard reads leads, metrics, and transcripts
-        from that API.
+        the project root (port 3000), then refresh.
       </p>
     </div>
   );

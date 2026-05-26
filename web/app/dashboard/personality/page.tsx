@@ -3,18 +3,30 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { Profile } from "@/lib/types";
+import { useActivePersona } from "@/lib/use-active-persona";
 
 /**
  * Read-only view of the active influencer's personality profile — "the moat".
  * (Editing/persisting profiles is a Phase-1 item; see docs/ROADMAP.md.)
+ *
+ * When demo mode is on, this shows the active demo persona's profile so the
+ * dashboard reads coherently across pages. A banner makes it clear which
+ * profile is the live backend one and which is scripted.
  */
 export default function PersonalityPage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [realProfile, setRealProfile] = useState<Profile | null>(null);
   const [offline, setOffline] = useState(false);
+  const { persona, enabled: demoEnabled } = useActivePersona();
 
   useEffect(() => {
-    api.profile().then(setProfile).catch(() => setOffline(true));
+    api
+      .profile()
+      .then(setRealProfile)
+      .catch(() => setOffline(true));
   }, []);
+
+  const profile: Profile | null = demoEnabled ? persona.profile : realProfile;
+  const showingDemo = demoEnabled;
 
   return (
     <div className="space-y-6">
@@ -27,7 +39,25 @@ export default function PersonalityPage() {
         </p>
       </header>
 
-      {offline && <p className="font-mono text-sm text-warm">Backend offline — run `npm run dev`.</p>}
+      {showingDemo && (
+        <div className="card flex items-start gap-3 border-signal/30 p-4">
+          <span className="mt-0.5 inline-flex shrink-0 items-center rounded border border-signal/40 px-1.5 py-px font-mono text-[10px] uppercase tracking-wider text-signal">
+            sim
+          </span>
+          <div className="text-sm text-fog-muted">
+            Showing the <span className="text-fog">{persona.label}</span> demo persona. Switch on the
+            overview page, or unset{" "}
+            <code className="rounded bg-ink-800 px-1.5 py-0.5 font-mono text-xs text-signal">
+              NEXT_PUBLIC_SHOW_DEMO_LEADS
+            </code>{" "}
+            to see the live backend profile.
+          </div>
+        </div>
+      )}
+
+      {offline && !showingDemo && (
+        <p className="font-mono text-sm text-warm">Backend offline — run `npm run dev`.</p>
+      )}
 
       {profile && (
         <div className="grid gap-4 lg:grid-cols-2">
