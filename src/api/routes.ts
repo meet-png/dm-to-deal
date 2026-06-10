@@ -2,9 +2,34 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { computeMetrics } from "../analytics/metrics.js";
 import type { LeadStore } from "../crm/types.js";
+import type { Lead, Priority } from "../domain/types.js";
 import type { PersonalityProfile } from "../personality/profile.js";
 import { log } from "../lib/logger.js";
 import { SimulatorError, type SimulatorService } from "./simulator.js";
+
+/** Backend priority is semantic (high/medium/low — what the brain reasons
+ *  about). The dashboard's LeadCard uses a richer visual tier
+ *  (urgent/active/watch/cold). We map at the API boundary so real leads
+ *  render through the same component path as the demo fixtures.
+ *  `cold` is reserved for the frontend demo (disqualified / dimmed) — the
+ *  brain never emits it. */
+const PRIORITY_VIEW: Record<Priority, "urgent" | "active" | "watch"> = {
+  high: "urgent",
+  medium: "active",
+  low: "watch",
+};
+
+/** Lift Lead.{coreInsight,recommendedAction,priority} into the nested
+ *  `intelligence` shape the dashboard expects, or return undefined if the
+ *  lead hasn't had a brain turn yet (e.g. a fresh capture). */
+function intelligenceOf(l: Lead): { coreInsight: string; recommendedAction: string; priority: "urgent" | "active" | "watch" } | undefined {
+  if (!l.coreInsight || !l.recommendedAction || !l.priority) return undefined;
+  return {
+    coreInsight: l.coreInsight,
+    recommendedAction: l.recommendedAction,
+    priority: PRIORITY_VIEW[l.priority],
+  };
+}
 
 export interface ApiDeps {
   store: LeadStore;
@@ -54,6 +79,7 @@ export function createApiRouter(deps: ApiDeps): Router {
           lastMessageAt: l.lastMessageAt,
           messageCount: l.transcript.length,
           revenue: l.revenue ?? null,
+          intelligence: intelligenceOf(l),
         }))
         .sort((a, b) => b.lastMessageAt.localeCompare(a.lastMessageAt)),
     );
@@ -62,7 +88,7 @@ export function createApiRouter(deps: ApiDeps): Router {
   router.get("/leads/:handle", async (req: Request, res: Response) => {
     const lead = await deps.store.getByHandle(String(req.params.handle));
     if (!lead) return res.status(404).json({ error: "not found" });
-    res.json(lead);
+    res.json({ ...lead, intelligence: intelligenceOf(lead) });
   });
 
   router.get("/profile", (_req, res) => {

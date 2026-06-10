@@ -1,5 +1,5 @@
-import type { Lead, Message, Sentiment, Stage } from "../../domain/types.js";
-import { STAGES, SENTIMENTS } from "../../domain/types.js";
+import type { Lead, Message, Priority, Sentiment, Stage } from "../../domain/types.js";
+import { PRIORITIES, STAGES, SENTIMENTS } from "../../domain/types.js";
 import {
   LEADS_COLUMNS,
   STATE_VERSION,
@@ -72,6 +72,9 @@ export function decodeRow(cells: CellValue[]): Lead {
     lastMessageAt: cellToIso(get("lastMessage")),
     bookingLinkSentAt: cellToOptIso(get("bookingSentAt")),
     revenue: typeof revenueCell === "number" ? revenueCell : undefined,
+    coreInsight: state.coreInsight,
+    recommendedAction: state.recommendedAction,
+    priority: state.priority,
   };
 }
 
@@ -80,11 +83,21 @@ export function decodeRow(cells: CellValue[]): Lead {
 interface StateBlob {
   v: typeof STATE_VERSION;
   transcript: Message[];
+  /** Brain-derived intelligence — optional so old rows decode cleanly. */
+  coreInsight?: string;
+  recommendedAction?: string;
+  priority?: Priority;
 }
 
 function encodeState(lead: Lead): string {
   const transcript = lead.transcript.slice(-MAX_TRANSCRIPT_MESSAGES);
-  const blob: StateBlob = { v: STATE_VERSION, transcript };
+  const blob: StateBlob = {
+    v: STATE_VERSION,
+    transcript,
+    coreInsight: lead.coreInsight,
+    recommendedAction: lead.recommendedAction,
+    priority: lead.priority,
+  };
   return JSON.stringify(blob);
 }
 
@@ -104,7 +117,16 @@ function decodeState(raw: string): StateBlob {
     return { v: STATE_VERSION, transcript: [] };
   }
   const transcript = Array.isArray(obj.transcript) ? obj.transcript.filter(isMessage) : [];
-  return { v: STATE_VERSION, transcript };
+  return {
+    v: STATE_VERSION,
+    transcript,
+    coreInsight: typeof obj.coreInsight === "string" ? obj.coreInsight : undefined,
+    recommendedAction: typeof obj.recommendedAction === "string" ? obj.recommendedAction : undefined,
+    priority:
+      typeof obj.priority === "string" && (PRIORITIES as readonly string[]).includes(obj.priority)
+        ? (obj.priority as Priority)
+        : undefined,
+  };
 }
 
 function isMessage(m: unknown): m is Message {

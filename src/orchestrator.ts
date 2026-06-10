@@ -1,9 +1,10 @@
 import type { Brain, Turn } from "./agent/brain.js";
+import type { AgentDecision } from "./agent/decision.schema.js";
 import type { BookingProvider } from "./booking/calendly.js";
 import type { Channel } from "./channels/types.js";
 import type { Pacer } from "./compliance/pacing.js";
 import type { LeadStore } from "./crm/types.js";
-import type { Action, Lead, Stage } from "./domain/types.js";
+import type { Lead } from "./domain/types.js";
 import { log } from "./lib/logger.js";
 
 /**
@@ -71,7 +72,7 @@ export class Orchestrator {
     this.pacer.recordSend();
 
     await this.store.append(lead.igHandle, { role: "agent", text, at: nowIso() });
-    await this.applyDecision(lead, decision.stage, decision.action);
+    await this.applyDecision(lead, decision);
 
     log.info("orchestrator.turn", {
       leadId: lead.id,
@@ -81,13 +82,21 @@ export class Orchestrator {
     });
   }
 
-  /** Persist stage/sentiment changes and booking bookkeeping. */
-  private async applyDecision(lead: Lead, stage: Stage, action: Action): Promise<void> {
+  /** Persist stage/sentiment changes, booking bookkeeping, and brain-derived
+   *  deal intelligence (coreInsight / recommendedAction / priority) so the
+   *  dashboard's lead cards reflect the latest read on the lead. */
+  private async applyDecision(lead: Lead, decision: AgentDecision): Promise<void> {
+    const { stage, action } = decision;
     lead.stage = action === "MARK_LOST" ? "Lost" : action === "STOP" ? "Lost" : stage;
     if (action === "SEND_BOOKING" && !lead.bookingLinkSentAt) {
       lead.bookingLinkSentAt = nowIso();
       if (lead.stage !== "Booked") lead.stage = "BookingSent";
     }
+    // Only overwrite intelligence fields when the brain actually emitted them,
+    // so scripted/older brains that omit them don't erase a prior turn's read.
+    if (decision.coreInsight !== undefined) lead.coreInsight = decision.coreInsight;
+    if (decision.recommendedAction !== undefined) lead.recommendedAction = decision.recommendedAction;
+    if (decision.priority !== undefined) lead.priority = decision.priority;
     await this.store.update(lead);
   }
 }

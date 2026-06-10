@@ -94,6 +94,84 @@ describe("Orchestrator", () => {
     expect(lead!.stage).toBe("Lost");
   });
 
+  it("persists brain-derived intelligence (coreInsight / recommendedAction / priority) via store.update", async () => {
+    const decision: AgentDecision = {
+      reply: "totally hear you — the call is free either way",
+      stage: "Objection",
+      sentiment: "warm",
+      action: "CONTINUE",
+      reasoning: "soften pricing concern",
+      coreInsight: "mentioned cost twice in 60s",
+      recommendedAction: "send case study, skip pitch",
+      priority: "high",
+    };
+
+    const store = new MemoryLeadStore();
+    const channel = new MockChannel();
+    const booking = new CalendlyLink("https://calendly.com/alex/strategy-call");
+    const pacer = new Pacer(ZERO_DELAY);
+
+    // Spy on update — assert the lead handed to the store carries the brain's
+    // intelligence verbatim by the time it lands.
+    const realUpdate = store.update.bind(store);
+    const calls: Array<{
+      coreInsight: string | undefined;
+      recommendedAction: string | undefined;
+      priority: string | undefined;
+    }> = [];
+    store.update = async (lead) => {
+      calls.push({
+        coreInsight: lead.coreInsight,
+        recommendedAction: lead.recommendedAction,
+        priority: lead.priority,
+      });
+      return realUpdate(lead);
+    };
+
+    const orchestrator = new Orchestrator(scriptedBrain([decision]), store, channel, booking, pacer);
+    await store.upsertCapture({ igHandle: "lead1" });
+    await orchestrator.onLeadMessage("lead1", "I'm interested but coaching is way out of my budget rn");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toEqual({
+      coreInsight: "mentioned cost twice in 60s",
+      recommendedAction: "send case study, skip pitch",
+      priority: "high",
+    });
+
+    // And the persisted lead reflects the same — i.e. the store round-trip works.
+    const persisted = await store.getByHandle("lead1");
+    expect(persisted?.coreInsight).toBe("mentioned cost twice in 60s");
+    expect(persisted?.recommendedAction).toBe("send case study, skip pitch");
+    expect(persisted?.priority).toBe("high");
+  });
+
+  it("leaves prior intelligence intact when a brain turn omits the new fields", async () => {
+    // Scripted brains (no API key) don't emit intelligence — make sure the
+    // orchestrator doesn't blow away a previous turn's read in that case.
+    const decision: AgentDecision = {
+      reply: "got it!",
+      stage: "Engaged",
+      sentiment: "warm",
+      action: "CONTINUE",
+      reasoning: "x",
+    };
+    const { store, orchestrator } = harness([decision]);
+    await store.upsertCapture({ igHandle: "lead1" });
+    const lead = (await store.getByHandle("lead1"))!;
+    lead.coreInsight = "previous read";
+    lead.recommendedAction = "previous action";
+    lead.priority = "medium";
+    await store.update(lead);
+
+    await orchestrator.onLeadMessage("lead1", "ok");
+
+    const after = await store.getByHandle("lead1");
+    expect(after?.coreInsight).toBe("previous read");
+    expect(after?.recommendedAction).toBe("previous action");
+    expect(after?.priority).toBe("medium");
+  });
+
   it("respects the daily send cap", async () => {
     const store = new MemoryLeadStore();
     const channel = new MockChannel();

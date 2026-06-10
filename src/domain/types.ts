@@ -23,6 +23,12 @@ export type Stage = (typeof STAGES)[number];
 export const SENTIMENTS = ["hot", "warm", "cold"] as const;
 export type Sentiment = (typeof SENTIMENTS)[number];
 
+/** The brain's coarse deal-priority signal, emitted alongside each turn.
+ *  The API layer maps these to the dashboard's visual priority tier
+ *  (high → urgent, medium → active, low → watch). */
+export const PRIORITIES = ["high", "medium", "low"] as const;
+export type Priority = (typeof PRIORITIES)[number];
+
 /**
  * The action the agent decides to take after composing a reply.
  * This is the "DECIDE" step of the thinking loop in the PRD.
@@ -66,6 +72,15 @@ export interface Lead {
   bookingLinkSentAt?: string;
   /** Revenue attributed to this lead once Won (PRD §7.3). */
   revenue?: number;
+  /** Brain-derived deal intelligence — refreshed every turn. A specific
+   *  behavioral observation in plain operator language ("3 self-trust
+   *  messages back-to-back", "asked for link · 18h no click"). */
+  coreInsight?: string;
+  /** Brain-derived recommended next action for the operator ("send case
+   *  study, skip pitch", "wait 24h, then DM proof"). One short imperative. */
+  recommendedAction?: string;
+  /** Brain-derived deal priority. */
+  priority?: Priority;
 }
 
 /** A brand-new lead captured from a comment/keyword, before the first DM. */

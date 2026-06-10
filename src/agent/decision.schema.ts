@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ACTIONS, SENTIMENTS, STAGES } from "../domain/types.js";
+import { ACTIONS, PRIORITIES, SENTIMENTS, STAGES } from "../domain/types.js";
 
 /**
  * The structured output the agent must return for every turn.
@@ -19,6 +19,13 @@ export const AgentDecisionSchema = z.object({
   action: z.enum(ACTIONS),
   /** One short line of private reasoning (logged, never sent to the lead). */
   reasoning: z.string(),
+  /** A specific behavioral observation in plain operator language. Optional —
+   *  older brains or scripted brains may omit it. */
+  coreInsight: z.string().optional(),
+  /** One short imperative for the operator's next action. Optional. */
+  recommendedAction: z.string().optional(),
+  /** Coarse priority tier. Optional. */
+  priority: z.enum(PRIORITIES).optional(),
 });
 
 export type AgentDecision = z.infer<typeof AgentDecisionSchema>;
@@ -42,6 +49,17 @@ export const AGENT_DECISION_JSON_SCHEMA = {
       type: "string",
       description: "One short line of private reasoning. Never shown to the lead.",
     },
+    coreInsight: {
+      type: "string",
+      description:
+        "A specific behavioral observation in plain operator language — e.g. 'mentioned cost twice', 'asked for link · 18h no click'. Concrete, never abstract scores.",
+    },
+    recommendedAction: {
+      type: "string",
+      description:
+        "One short imperative for the operator — e.g. 'send testimonial', 'wait 24h then send proof'.",
+    },
+    priority: { type: "string", enum: [...PRIORITIES] },
   },
   required: ["reply", "stage", "sentiment", "action", "reasoning"],
   additionalProperties: false,
