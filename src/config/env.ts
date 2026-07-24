@@ -27,6 +27,11 @@ const EnvSchema = z.object({
   MANYCHAT_API_TOKEN: z.string().optional(),
   MANYCHAT_WEBHOOK_SECRET: z.string().optional(),
 
+  // Path to a JSON PersonalityProfile file (see profiles/example.json). When
+  // unset, the app falls back to the built-in EXAMPLE_PROFILE so it runs with
+  // zero setup — but real launches MUST set this to the influencer's profile.
+  DM_PROFILE_PATH: z.string().optional(),
+
   DM_STORE: z.enum(["memory", "sheets"]).default("memory"),
   // Google Sheets ID is the 44-char token in the spreadsheet URL.
   // Constrained character set blocks accidental URL pastes (we want the ID only).

@@ -5,7 +5,7 @@ import "dotenv/config";
 import { seedDemoLeads } from "./api/seed.js";
 import { loadEnv } from "./config/env.js";
 import { buildApp } from "./factory.js";
-import { EXAMPLE_PROFILE } from "./personality/profile.js";
+import { loadProfile } from "./personality/loader.js";
 import { createServer } from "./server/app.js";
 import { log } from "./lib/logger.js";
 
@@ -13,12 +13,14 @@ import { log } from "./lib/logger.js";
  * Entrypoint. Loads + validates config, wires the app, optionally seeds demo
  * leads, and starts the server.
  *
- * The active personality profile is the example for now; in a multi-tenant
- * deployment this is loaded per connected account (see docs/ROADMAP.md).
+ * The active PersonalityProfile is loaded from `DM_PROFILE_PATH` (a JSON
+ * file). When unset, the loader falls back to the built-in EXAMPLE_PROFILE
+ * so the demo runs with no setup. Per-influencer deploys point this at their
+ * own profile file (see `profiles/example.json` as a template).
  */
 async function main(): Promise<void> {
   const env = loadEnv();
-  const profile = EXAMPLE_PROFILE;
+  const profile = loadProfile(env.DM_PROFILE_PATH);
 
   const { orchestrator, store, channel, simulator } = buildApp(env, profile);
 

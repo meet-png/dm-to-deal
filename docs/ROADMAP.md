@@ -27,7 +27,7 @@ Roadmap) but at the engineering level.
 - [x] Premium spreadsheet provisioning (`npm run sheets:init`) — branded Dashboard, validation, conditional formatting
 - [ ] Finish the ManyChat send payload against a real ManyChat flow + verify the
       exact inbound webhook shape; adjust `InboundSchema` to match
-- [ ] Per-influencer profile loading (config or DB) instead of the hard-coded example
+- [x] Per-influencer profile loading via `DM_PROFILE_PATH` (see `profiles/example.json`)
 - [ ] A scheduled "nudge" job: scan `staleLeads()` and send one soft follow-up
 - [ ] Deploy to a free tier (Railway / Render / Fly) with env-based secrets
 

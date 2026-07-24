@@ -10,6 +10,8 @@
  * stable, cacheable prefix of every Claude request for that influencer.
  */
 
+import { z } from "zod";
+
 export interface PersonalityProfile {
   /** Influencer display name, e.g. "Alex Rivera". */
   name: string;
@@ -41,6 +43,23 @@ export type ProfileDraft = Omit<PersonalityProfile, "recentCaptions"> &
 export function buildProfile(draft: ProfileDraft): PersonalityProfile {
   return { recentCaptions: [], ...draft };
 }
+
+/**
+ * Validation schema for a JSON profile file loaded at boot. `recentCaptions`
+ * defaults to `[]` so a day-one questionnaire (no content analysis yet) is
+ * still a valid profile — matches `ProfileDraft`.
+ */
+export const PersonalityProfileSchema = z.object({
+  name: z.string().min(1),
+  niche: z.string().min(1),
+  offer: z.string().min(1),
+  tone: z.string().min(1),
+  signaturePhrases: z.array(z.string().min(1)).min(1),
+  emojiHabits: z.string().min(1),
+  commonObjections: z.array(z.string().min(1)).min(1),
+  recentCaptions: z.array(z.string().min(1)).default([]),
+  leadMagnet: z.string().min(1),
+});
 
 /**
  * A worked example profile — also used by the local conversation simulator

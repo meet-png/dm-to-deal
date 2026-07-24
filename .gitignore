@@ -32,6 +32,11 @@ desktop.ini
 # Claude Code — user-local settings (per-developer permissions allowlist)
 .claude/settings.local.json
 
+# Real influencer profiles are proprietary voice IP — never commit.
+# Only the example template is tracked.
+profiles/*.json
+!profiles/example.json
+
 # Logs & temp
 *.log
 npm-debug.log*
