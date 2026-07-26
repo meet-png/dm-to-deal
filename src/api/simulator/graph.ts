@@ -268,14 +268,23 @@ export const NODES: Record<NodeId, NodeDef> = {
     bursts: [
       [
         {
-          text: "here's what I'd actually suggest — hop on a free 20-min call with me.",
+          text: "so here's my honest take — the fastest way to know if this actually fits your life is a 20-min call. free, zero pitch.",
+          typingMs: 2400,
+        },
+        {
+          text: "we map your first 2 weeks together and you keep the plan whether we ever work together or not.",
+          typingMs: 2600,
+        },
+      ],
+      [
+        {
+          text: "here's what I'd genuinely suggest — hop on a free 20 min call with me.",
           typingMs: 2000,
         },
         {
-          text: "no pitch, no pressure. I just map out what your first 2 weeks should look like specifically.",
+          text: "no pitch, promise. we map out what your next 2 weeks should look like, and you leave with a real plan either way.",
           typingMs: 2600,
         },
-        { text: "you walk away with a plan whether we work together or not.", typingMs: 1800 },
       ],
     ],
     suggestions: [
@@ -324,21 +333,24 @@ export const NODES: Record<NodeId, NodeDef> = {
     sentiment: "warm",
     bursts: [
       [
-        { text: "totally fair question.", typingMs: 800 },
+        { text: "totally fair — the call itself is 100% free.", typingMs: 1500 },
         {
-          text: "honestly — the call itself is free. it's literally to see if we're a fit and give you a plan.",
-          typingMs: 2700,
+          text: "no pitch on it, just a plan mapped to your life. no one's asking you to commit to anything. wanna hop on?",
+          typingMs: 2500,
         },
+      ],
+      [
+        { text: "yeah honest answer — the call is free, that's kind of the whole point of it.", typingMs: 1900 },
         {
-          text: "no one's asking you to commit to anything on the call. wanna hop on?",
-          typingMs: 2000,
+          text: "we see if the coaching's a fit, either way you leave with a plan. zero commitment. wanna grab a time?",
+          typingMs: 2500,
         },
       ],
     ],
     suggestions: [
       ["okay yeah let's hop on", "I really can't afford anything though", "is the call genuinely free?"],
-      ["alright, send me a time", "what if I can't pay after?", "okay but no pressure right?"],
-      ["sounds reasonable, let's go", "money is honestly tight rn", "okay no pressure right?"],
+      ["alright, send me a time", "still thinking honestly", "okay but no pressure right?"],
+      ["sounds reasonable, let's go", "money is honestly tight rn", "hold on, let me think"],
     ],
   },
 
@@ -349,19 +361,22 @@ export const NODES: Record<NodeId, NodeDef> = {
       [
         { text: "100% fair to ask.", typingMs: 900 },
         {
-          text: "easiest way is to just see for yourself — get on the call, ask whatever you want, I show you exactly how it works.",
-          typingMs: 2900,
+          text: "easiest way — hop on the call, ask me anything. if it doesn't feel right you ghost me, zero hard feelings 🙌",
+          typingMs: 2800,
         },
+      ],
+      [
+        { text: "yeah totally reasonable — hard to tell online who's real.", typingMs: 1800 },
         {
-          text: "if it doesn't feel right you ghost me and that's that. zero hard feelings.",
-          typingMs: 2200,
+          text: "20 min call, ask whatever you want. no offer if you don't want one — you just walk away with a plan. easy.",
+          typingMs: 2600,
         },
       ],
     ],
     suggestions: [
       ["alright fine, let's hop on", "show me real client results first", "how do I know you're not a bot?"],
-      ["okay I'll trust it for now", "any case studies?", "I've been scammed before"],
-      ["sure, book me in", "send me before/afters first", "what's your guarantee?"],
+      ["okay I'll trust it for now", "hold on, thinking", "I've been scammed before"],
+      ["sure, book me in", "send me before/afters first", "give me a sec to think"],
     ],
   },
 
@@ -370,21 +385,24 @@ export const NODES: Record<NodeId, NodeDef> = {
     sentiment: "warm",
     bursts: [
       [
-        { text: "yeah that's the most common story I hear honestly.", typingMs: 1800 },
+        { text: "yeah — that's honestly the most common story I hear.", typingMs: 1800 },
         {
-          text: "what most programs miss is that desk life isn't a willpower problem — it's a structure problem.",
+          text: "desk life isn't a willpower problem, it's a structure problem. every client who 'didn't have time' found it once we made the plan stupid-simple. wanna see if this is different?",
           typingMs: 2900,
         },
+      ],
+      [
+        { text: "yep, super common — and usually it's the plan, not the person.", typingMs: 1800 },
         {
-          text: "every client who 'didn't have time' found it once we made the plan stupid-simple. let's see if this is different.",
-          typingMs: 3000,
+          text: "programs built for gym rats don't survive desk life. small wins compound if the structure is right. wanna see what different looks like?",
+          typingMs: 2700,
         },
       ],
     ],
     suggestions: [
       ["okay, I'll try one more time", "but I always quit", "what makes you different?"],
-      ["alright I'm in", "I just can't stick to anything", "honestly I don't believe in myself"],
-      ["fine, let's do it", "I'll commit this time, promise", "prove it to me on the call"],
+      ["alright I'm in", "I just can't stick to anything", "hold on, let me think"],
+      ["fine, let's do it", "I'll commit this time, promise", "give me a sec"],
     ],
   },
 
@@ -393,13 +411,16 @@ export const NODES: Record<NodeId, NodeDef> = {
     sentiment: "warm",
     bursts: [
       [
-        { text: "I get it.", typingMs: 700 },
+        { text: "I get it — 'better time' usually never shows up though.", typingMs: 1800 },
         {
-          text: "the thing is — 'better time' usually never shows up. the call's 20 min, you can do it on a walk.",
-          typingMs: 2800,
+          text: "the call's 20 min, do it on a walk. and the plan itself is built for someone with zero extra time. that's literally the whole design.",
+          typingMs: 2900,
         },
+      ],
+      [
+        { text: "totally hear you — schedule is real.", typingMs: 1200 },
         {
-          text: "and the plan I give you is built for someone who literally has no extra time. that's the whole point.",
+          text: "quick truth: 20 min call, and the plan is designed for zero-extra-time weeks. built for exactly this scenario.",
           typingMs: 2700,
         },
       ],
@@ -407,7 +428,7 @@ export const NODES: Record<NodeId, NodeDef> = {
     suggestions: [
       ["alright let's just do this week", "I'm dead serious busy though", "fine I'll find 20 min"],
       ["okay, send a time", "no really 10-hour days", "next week could work actually"],
-      ["fair enough, book me", "I'll get back to you next month", "okay maybe a quick call"],
+      ["fair enough, book me", "I'll get back to you next month", "hold on, thinking"],
     ],
   },
 
@@ -417,23 +438,41 @@ export const NODES: Record<NodeId, NodeDef> = {
     bursts: [
       [
         {
-          text: "yeah for sure — quick version: it's a 12-week body recomp program for people who sit at a desk all day.",
-          typingMs: 2700,
+          text: "so the plan I just sent is a 7-day desk-worker reset — walks, mobility, one short lift a day. built to be doable when you're slammed.",
+          typingMs: 2600,
         },
         {
-          text: "4 sessions a week, 30 min each, full programming, weekly check-in with me.",
+          text: "the coaching side is separate — 1-on-1 if the plan clicks. no rush on that. what's actually not working for you rn — energy, back, weight?",
+          typingMs: 2900,
+        },
+      ],
+      [
+        {
+          text: "quick version: the 7-day plan = short daily reset built specifically for desk life. that's what I sent.",
           typingMs: 2400,
         },
         {
-          text: "the call is the best way to see if it actually fits your life — way more useful than me typing it all out here.",
-          typingMs: 2900,
+          text: "I also coach people 1-on-1 if it's a fit, but let's start with what YOU need. what's the part of your day that feels worst?",
+          typingMs: 2700,
         },
       ],
     ],
     suggestions: [
-      ["got it — send a time", "okay, and how much?", "still on the fence honestly"],
-      ["that makes sense, book me", "but the price?", "sounds interesting actually"],
-      ["okay let's do it", "is this expensive?", "I'll think about it"],
+      [
+        "honestly I sit all day and feel awful",
+        "my back kills me by 3pm",
+        "how much does the coaching cost?",
+      ],
+      [
+        "energy crash is the worst part",
+        "I've tried programs before and quit",
+        "sounds interesting, tell me more",
+      ],
+      [
+        "just feel stiff and slow all the time",
+        "weight creep honestly",
+        "is the coaching expensive?",
+      ],
     ],
   },
 
@@ -580,7 +619,10 @@ export const TRANSITIONS: Record<NodeId, Partial<Record<LeadIntent | "*", NodeId
     "*": "POSITIONING",
   },
   POSITIONING: {
-    positive: "ASKING_FOR_BOOKING",
+    // POSITIONING has already explicitly proposed the call — a positive reply
+    // is agreement to the call itself, so skip ASKING_FOR_BOOKING (redundant
+    // "want me to send over a time?" when they already said yes).
+    positive: "SEND_BOOKING",
     obj_pricing: "OBJ_PRICING",
     obj_trust: "OBJ_TRUST",
     obj_history: "OBJ_HISTORY",
@@ -588,6 +630,7 @@ export const TRANSITIONS: Record<NodeId, Partial<Record<LeadIntent | "*", NodeId
     obj_curiosity: "OBJ_CURIOSITY",
     hesitation: "SOCIAL_PROOF",
     negative: "GHOSTED",
+    // Ambiguous replies still get an explicit ask — they haven't clearly agreed.
     "*": "ASKING_FOR_BOOKING",
   },
   ASKING_FOR_BOOKING: {
@@ -603,40 +646,62 @@ export const TRANSITIONS: Record<NodeId, Partial<Record<LeadIntent | "*", NodeId
   },
   OBJ_PRICING: {
     positive: "REPOSITION",
-    hesitation: "REPOSITION",
+    // Hesitation after objection-handling ≠ agreement. Re-anchor with proof
+    // instead of the tone-deaf REPOSITION "okay perfect, let's book!".
+    hesitation: "SOCIAL_PROOF",
+    // "Tell me more" mid-objection = wants to understand the system, not the
+    // free plan. SOCIAL_PROOF describes exactly that.
+    obj_curiosity: "SOCIAL_PROOF",
     obj_trust: "OBJ_TRUST",
     negative: "GHOSTED",
     "*": "REPOSITION",
   },
   OBJ_TRUST: {
     positive: "REPOSITION",
-    hesitation: "REPOSITION",
+    hesitation: "SOCIAL_PROOF",
+    obj_curiosity: "SOCIAL_PROOF",
     negative: "GHOSTED",
     "*": "REPOSITION",
   },
   OBJ_HISTORY: {
     positive: "REPOSITION",
-    hesitation: "REPOSITION",
+    hesitation: "SOCIAL_PROOF",
+    obj_curiosity: "SOCIAL_PROOF",
     negative: "GHOSTED",
     "*": "REPOSITION",
   },
   OBJ_TIMING: {
     positive: "REPOSITION",
-    hesitation: "REPOSITION",
+    hesitation: "SOCIAL_PROOF",
+    obj_curiosity: "SOCIAL_PROOF",
     negative: "GHOSTED",
     "*": "REPOSITION",
   },
   OBJ_CURIOSITY: {
-    positive: "ASKING_FOR_BOOKING",
+    // Now that OBJ_CURIOSITY ends with a qualifying question, route the reply
+    // through the qualifying flow instead of jumping straight to booking.
+    pain_stated: "QUALIFYING_DEEPER",
+    goal_stated: "QUALIFYING_GOAL",
     obj_pricing: "OBJ_PRICING",
+    obj_trust: "OBJ_TRUST",
+    obj_history: "OBJ_HISTORY",
+    obj_timing: "OBJ_TIMING",
     hesitation: "SOCIAL_PROOF",
+    positive: "POSITIONING",
     negative: "GHOSTED",
-    "*": "ASKING_FOR_BOOKING",
+    "*": "QUALIFYING_DEEPER",
   },
   REPOSITION: {
     positive: "SEND_BOOKING",
     hesitation: "GHOSTED", // lead truly backed out at the close — graceful exit
     negative: "GHOSTED",
+    // Any NEW objection at the close = they're stalling, not resolving.
+    // Sending the link on top of "actually maybe later" is tone-deaf; ghost
+    // gracefully so we don't chase them into a booking they'll no-show.
+    obj_pricing: "GHOSTED",
+    obj_trust: "GHOSTED",
+    obj_history: "GHOSTED",
+    obj_timing: "GHOSTED",
     "*": "SEND_BOOKING",
   },
   SEND_BOOKING: { "*": "BOOKED" },

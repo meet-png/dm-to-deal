@@ -77,7 +77,7 @@ const RULES: Rule[] = [
   //    `"ok still not sure"` doesn't get marked as agreement.
   {
     intent: "hesitation",
-    re: /\b(still\s+not\s+sure|need\s+to\s+think|i'?ll\s+think(?:\s+about\s+it)?|think\s+about\s+it|give\s+me\s+(?:a\s+)?(?:sec(?:ond)?|min(?:ute)?)|i'?m\s+not\s+ready|not\s+sure\s+(?:yet|honestly|tbh|rn)|let\s+me\s+think|hesitant|on\s+the\s+fence|change(?:d)?\s+my\s+mind|just\s+thinking)\b/i,
+    re: /\b(still\s+not\s+sure|need\s+to\s+think|i'?ll\s+think(?:\s+about\s+it)?|think\s+about\s+it|give\s+me\s+(?:a\s+)?(?:sec(?:ond)?|min(?:ute)?)|i'?m\s+not\s+ready|not\s+sure\s+(?:yet|honestly|tbh|rn)|let\s+me\s+think|hesitant|on\s+the\s+fence|change(?:d)?\s+my\s+mind|just\s+thinking|hold\s+on|hold\s+up|hang\s+on|one\s+sec|still\s+thinking)\b/i,
   },
   // 5. Volunteered goal — require an outcome verb to avoid matching the
   //    standalone "want to" in negatives like "don't want to be sold to".

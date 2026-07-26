@@ -288,16 +288,35 @@ function fallbackByStage(stage: Stage): string[] {
 // ── Pure helpers ─────────────────────────────────────────────────────────
 
 /**
- * Pick a next node honoring three constraints:
+ * The node that specifically handles each hard-objection intent. Used to
+ * detect "the lead re-raised the same hard objection while we were already
+ * addressing it" — that's the signal to gracefully exit, not push harder.
+ * `obj_curiosity` is deliberately absent: repeated curiosity = keep engaging.
+ */
+const HARD_OBJECTION_NODE: Partial<Record<LeadIntent, NodeId>> = {
+  obj_pricing: "OBJ_PRICING",
+  obj_trust: "OBJ_TRUST",
+  obj_history: "OBJ_HISTORY",
+  obj_timing: "OBJ_TIMING",
+};
+
+/**
+ * Pick a next node honoring four constraints:
+ * - Same-node re-raise of a hard objection ("I *really* can't afford") means
+ *   we didn't sell the answer — route to GHOSTED (graceful exit) rather than
+ *   push into a booking the lead will regret.
  * - If the intent has an explicit transition from current → use it.
- * - If we've already raised this objection once, fall through to the `*` arm
- *   (we don't want to loop on the same objection forever).
+ * - If we've already raised this objection once (from a *different* node),
+ *   fall through to the `*` arm — no infinite objection loops.
  * - Otherwise use the `*` fallback.
  */
 function pickNextNode(session: SimSession, intent: LeadIntent): NodeId {
   const from = session.currentNode;
   // Initial state defensiveness — shouldn't happen because `start()` sets it.
   if (!from) return "QUALIFYING_PAIN";
+
+  // Same-node hard-objection re-raise → graceful exit.
+  if (HARD_OBJECTION_NODE[intent] === from) return "GHOSTED";
 
   const table = TRANSITIONS[from];
   const alreadyRaised = intent.startsWith("obj_") && session.objectionsRaised.has(intent);

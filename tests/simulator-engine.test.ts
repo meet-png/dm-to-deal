@@ -69,6 +69,13 @@ describe("intent classifier", () => {
     ["I just don't want to be sold to", "other"], // tightened goal_stated
     ["money is honestly tight rn", "obj_pricing"],
     ["what if I can't pay after?", "obj_pricing"],
+    // Freshly added hesitation cues (were falling through to "other" and
+    // mis-routing REPOSITION → SEND_BOOKING at close):
+    ["hold on", "hesitation"],
+    ["hold up a sec", "hesitation"],
+    ["hang on", "hesitation"],
+    ["one sec", "hesitation"],
+    ["still thinking honestly", "hesitation"],
   ];
 
   for (const [input, expected] of cases) {
@@ -193,6 +200,58 @@ describe("SimulatorEngine — memory + variation", () => {
     // Second pricing objection from REPOSITION should still progress forward,
     // not re-enter OBJ_PRICING infinitely.
     expect(c.nodeId).not.toBe("OBJ_PRICING");
+  });
+
+  it("gracefully exits when the lead re-raises the same hard objection", () => {
+    // "I really can't afford anything" after OBJ_PRICING already handled it
+    // = the lead didn't buy the answer. GHOSTED is correct — pushing REPOSITION
+    // ("okay perfect, let's book!") would be tone-deaf.
+    const engine = makeEngine();
+    const start = engine.start("sim_reraise");
+    engine.send(start.sessionId, "yeah my back kills me");
+    const pricing = engine.send(start.sessionId, "how much does this cost?");
+    expect(pricing.nodeId).toBe("OBJ_PRICING");
+    const doubled = engine.send(start.sessionId, "I really can't afford anything though");
+    expect(doubled.nodeId).toBe("GHOSTED");
+    expect(doubled.terminal).toBe(true);
+    expect(doubled.stage).toBe("Lost");
+  });
+
+  it("POSITIONING → yes skips ASKING_FOR_BOOKING and goes straight to the link", () => {
+    // Was a bug: POSITIONING said "hop on a call?", lead said "yes send me a
+    // time", agent then asked *again* "want me to send a time?". Now goes
+    // straight to SEND_BOOKING.
+    const engine = makeEngine();
+    const start = engine.start("sim_pos_yes");
+    engine.send(start.sessionId, "my back kills me"); // → QUALIFYING_DEEPER
+    const positioning = engine.send(start.sessionId, "sounds good actually"); // → POSITIONING via *
+    expect(positioning.nodeId).toBe("POSITIONING");
+    const yes = engine.send(start.sessionId, "yes send me a time");
+    expect(yes.nodeId).toBe("SEND_BOOKING");
+  });
+
+  it("objection hesitation re-anchors on SOCIAL_PROOF (not tone-deaf REPOSITION)", () => {
+    // "give me a sec to think" after pricing objection should NOT trigger
+    // "okay perfect, let's book" — that's the specific bug this guards.
+    const engine = makeEngine();
+    const start = engine.start("sim_obj_hes");
+    engine.send(start.sessionId, "my back hurts all day");
+    engine.send(start.sessionId, "how much is it?");
+    const hesitant = engine.send(start.sessionId, "give me a sec to think");
+    expect(hesitant.nodeId).toBe("SOCIAL_PROOF");
+  });
+
+  it("REPOSITION → 'hold on' hesitation exits gracefully, doesn't send link", () => {
+    // Regression: 'hold on' used to classify as "other", REPOSITION.* would
+    // then send the booking link. Now classifies as hesitation → GHOSTED.
+    const engine = makeEngine();
+    const start = engine.start("sim_hold_on");
+    engine.send(start.sessionId, "my back kills me");
+    engine.send(start.sessionId, "how much?");
+    engine.send(start.sessionId, "okay let's do it"); // → REPOSITION
+    const paused = engine.send(start.sessionId, "actually hold on");
+    expect(paused.nodeId).toBe("GHOSTED");
+    expect(paused.terminal).toBe(true);
   });
 
   it("captures pain + goal slots from the lead's words", () => {
