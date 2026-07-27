@@ -28,8 +28,9 @@ Roadmap) but at the engineering level.
 - [ ] Finish the ManyChat send payload against a real ManyChat flow + verify the
       exact inbound webhook shape; adjust `InboundSchema` to match
 - [x] Per-influencer profile loading via `DM_PROFILE_PATH` (see `profiles/example.json`)
-- [ ] A scheduled "nudge" job: scan `staleLeads()` and send one soft follow-up
-- [ ] Deploy to a free tier (Railway / Render / Fly) with env-based secrets
+- [x] Scheduled "nudge" job: scans `staleLeads()` and sends one soft follow-up per
+      lead (at-most-once via `nudgedAt`). Gated behind `DM_NUDGE_ENABLED=true`.
+- [x] Deployed on Railway with env-based secrets (demo dashboard + backend live)
 
 ## 🔭 Phase 2 — prove + harden (PRD weeks 3–4)
 

@@ -52,6 +52,16 @@ const EnvSchema = z.object({
   DM_MIN_REPLY_DELAY_SECONDS: z.coerce.number().nonnegative().default(120),
   DM_MAX_REPLY_DELAY_SECONDS: z.coerce.number().nonnegative().default(480),
   DM_MAX_MESSAGES_PER_DAY: z.coerce.number().int().positive().default(60),
+
+  // Scheduled soft-nudge job (one gentle follow-up per lead that went quiet).
+  // Off by default so the public demo never pings seeded leads. Real deploys
+  // set DM_NUDGE_ENABLED=true; see src/scheduler/nudge-job.ts.
+  DM_NUDGE_ENABLED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  DM_NUDGE_INTERVAL_MINUTES: z.coerce.number().int().positive().default(30),
+  DM_NUDGE_AFTER_HOURS: z.coerce.number().positive().default(24),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

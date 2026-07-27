@@ -81,6 +81,10 @@ export interface Lead {
   recommendedAction?: string;
   /** Brain-derived deal priority. */
   priority?: Priority;
+  /** ISO timestamp of the single soft nudge sent to re-engage a quiet lead.
+   *  Set by the scheduler before the nudge fires, so a crash mid-nudge never
+   *  causes a retry storm. Absence means "not yet nudged". */
+  nudgedAt?: string;
 }
 
 /** A brand-new lead captured from a comment/keyword, before the first DM. */

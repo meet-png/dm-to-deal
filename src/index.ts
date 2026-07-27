@@ -6,6 +6,7 @@ import { seedDemoLeads } from "./api/seed.js";
 import { loadEnv } from "./config/env.js";
 import { buildApp } from "./factory.js";
 import { loadProfile } from "./personality/loader.js";
+import { startNudgeJob } from "./scheduler/nudge-job.js";
 import { createServer } from "./server/app.js";
 import { log } from "./lib/logger.js";
 
@@ -47,6 +48,19 @@ async function main(): Promise<void> {
       brain: env.ANTHROPIC_API_KEY ? "claude" : "scripted-demo",
     });
   });
+
+  if (env.DM_NUDGE_ENABLED) {
+    startNudgeJob({
+      store,
+      orchestrator,
+      afterHours: env.DM_NUDGE_AFTER_HOURS,
+      intervalMinutes: env.DM_NUDGE_INTERVAL_MINUTES,
+    });
+    log.info("nudge.scheduled", {
+      intervalMinutes: env.DM_NUDGE_INTERVAL_MINUTES,
+      afterHours: env.DM_NUDGE_AFTER_HOURS,
+    });
+  }
 }
 
 main().catch((err) => {
