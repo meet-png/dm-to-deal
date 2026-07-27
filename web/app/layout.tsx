@@ -15,7 +15,7 @@ const mono = JetBrains_Mono({
 });
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://web-production-029f7.up.railway.app";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://dm-to-deal.up.railway.app";
 const TITLE = "DM-to-Deal — autonomous AI sales agent for Instagram";
 const DESCRIPTION =
   "Capture warm leads, converse in your voice, book the call, track the revenue — automatically, 24/7.";
