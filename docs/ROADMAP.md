@@ -26,7 +26,9 @@ Roadmap) but at the engineering level.
       (least-privilege service account, single spreadsheet) — see [`SHEETS_SETUP.md`](./SHEETS_SETUP.md)
 - [x] Premium spreadsheet provisioning (`npm run sheets:init`) — branded Dashboard, validation, conditional formatting
 - [ ] Finish the ManyChat send payload against a real ManyChat flow + verify the
-      exact inbound webhook shape; adjust `InboundSchema` to match
+      exact inbound webhook shape; adjust `InboundSchema` to match. Diagnostic
+      helper: `POST /webhooks/debug/manychat?token=<DM_MANYCHAT_DEBUG_TOKEN>` echoes
+      any payload with a schema-validation report (never processes it).
 - [x] Per-influencer profile loading via `DM_PROFILE_PATH` (see `profiles/example.json`)
 - [x] Scheduled "nudge" job: scans `staleLeads()` and sends one soft follow-up per
       lead (at-most-once via `nudgedAt`). Gated behind `DM_NUDGE_ENABLED=true`.

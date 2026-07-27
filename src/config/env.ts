@@ -53,6 +53,13 @@ const EnvSchema = z.object({
   DM_MAX_REPLY_DELAY_SECONDS: z.coerce.number().nonnegative().default(480),
   DM_MAX_MESSAGES_PER_DAY: z.coerce.number().int().positive().default(60),
 
+  // Diagnostic endpoint (POST /webhooks/debug/manychat) that echoes the
+  // parsed payload and reports whether it matches InboundSchema. Enabled
+  // only when this token is set; requests must supply the same token as a
+  // `?token=` query param. Use ONCE to reconcile a real ManyChat webhook
+  // shape against our schema, then unset in prod.
+  DM_MANYCHAT_DEBUG_TOKEN: z.string().min(16).optional(),
+
   // Scheduled soft-nudge job (one gentle follow-up per lead that went quiet).
   // Off by default so the public demo never pings seeded leads. Real deploys
   // set DM_NUDGE_ENABLED=true; see src/scheduler/nudge-job.ts.

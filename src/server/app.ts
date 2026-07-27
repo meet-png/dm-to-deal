@@ -1,6 +1,7 @@
+import { timingSafeEqual } from "node:crypto";
 import express, { type Express, type Request, type Response } from "express";
 import type { Channel, WebhookChannel } from "../channels/types.js";
-import { WebhookError } from "../channels/manychat.js";
+import { InboundSchema, WebhookError } from "../channels/manychat.js";
 import type { Orchestrator } from "../orchestrator.js";
 import type { LeadStore } from "../crm/types.js";
 import type { PersonalityProfile } from "../personality/profile.js";
@@ -26,6 +27,8 @@ export interface ServerDeps {
   simulator: SimulatorService;
   /** Comma-separated allow-list of origins permitted to call the API. */
   corsOrigins: string[];
+  /** Enables POST /webhooks/debug/manychat when set (requires ?token=<same>). */
+  manychatDebugToken?: string;
 }
 
 function isWebhookChannel(c: Channel): c is WebhookChannel {
@@ -82,7 +85,86 @@ export function createServer(deps: ServerDeps): Express {
     },
   );
 
+  // Diagnostic route for reconciling a live ManyChat webhook payload against
+  // our InboundSchema. Enabled only when a token is configured; requests must
+  // supply the same value as ?token=<...>. Never touches the orchestrator or
+  // the store — pure echo + parse-report. Rate limited like the real webhook.
+  if (deps.manychatDebugToken) {
+    const debugLimiter = makeRateLimiter({ windowMs: 60_000, max: 30 });
+    app.post(
+      "/webhooks/debug/manychat",
+      debugLimiter,
+      express.text({ type: "*/*", limit: "64kb" }),
+      (req: Request, res: Response) => {
+        if (!verifyDebugToken(req, deps.manychatDebugToken!)) {
+          return res.status(404).json({ error: "not found" });
+        }
+        const rawBody = typeof req.body === "string" ? req.body : "";
+        let parsedBody: unknown = rawBody;
+        let jsonOk = true;
+        try {
+          parsedBody = JSON.parse(rawBody);
+        } catch {
+          jsonOk = false;
+        }
+        const schema = jsonOk ? InboundSchema.safeParse(parsedBody) : undefined;
+        const issues = !jsonOk
+          ? [{ path: "", message: "malformed JSON body" }]
+          : schema!.success
+            ? []
+            : schema!.error.issues.map((i) => ({
+                path: i.path.join("."),
+                message: i.message,
+              }));
+
+        res.status(200).json({
+          receivedBody: parsedBody,
+          jsonOk,
+          headers: safeHeaderInventory(req.headers),
+          schemaValidation: {
+            success: Boolean(schema?.success),
+            issues,
+            parsed: schema?.success ? schema.data : null,
+          },
+          signatureCheck: {
+            headerPresent: Boolean(req.headers["x-manychat-signature"]),
+            note: "signature NOT verified in debug mode; production route enforces HMAC",
+          },
+        });
+      },
+    );
+    log.info("manychat.debug.enabled");
+  }
+
   return app;
+}
+
+/** Constant-time token comparison so the token can't be brute-forced by timing. */
+function verifyDebugToken(req: Request, expected: string): boolean {
+  const raw = req.query.token;
+  const provided = typeof raw === "string" ? raw : "";
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
+/** Echo back non-sensitive headers only. Never surface Authorization/Cookie. */
+function safeHeaderInventory(
+  headers: Record<string, string | string[] | undefined>,
+): Record<string, string | string[]> {
+  const allowPrefixes = ["content-", "x-manychat-", "user-agent", "accept"];
+  const denyExact = new Set(["authorization", "cookie", "set-cookie", "x-api-key"]);
+  const out: Record<string, string | string[]> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    if (v === undefined) continue;
+    const key = k.toLowerCase();
+    if (denyExact.has(key)) continue;
+    if (!allowPrefixes.some((p) => key === p || key.startsWith(p))) continue;
+    // Mask the signature value — presence is useful; content is not.
+    out[key] = key === "x-manychat-signature" ? "[redacted]" : v;
+  }
+  return out;
 }
 
 async function handleEvent(

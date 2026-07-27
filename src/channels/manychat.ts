@@ -12,7 +12,7 @@ import { log } from "../lib/logger.js";
  * check throws — the route turns that into a 401/400, never a 200.
  */
 
-const InboundSchema = z.object({
+export const InboundSchema = z.object({
   event: z.enum(["keyword_opt_in", "message"]),
   ig_handle: z
     .string()

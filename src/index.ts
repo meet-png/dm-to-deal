@@ -37,6 +37,7 @@ async function main(): Promise<void> {
     profile,
     simulator,
     corsOrigins: env.DM_CORS_ORIGINS.split(",").map((s) => s.trim()),
+    manychatDebugToken: env.DM_MANYCHAT_DEBUG_TOKEN,
   });
 
   app.listen(env.PORT, () => {
