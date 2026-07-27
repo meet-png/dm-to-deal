@@ -14,10 +14,28 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://web-production-029f7.up.railway.app";
+const TITLE = "DM-to-Deal — autonomous AI sales agent for Instagram";
+const DESCRIPTION =
+  "Capture warm leads, converse in your voice, book the call, track the revenue — automatically, 24/7.";
+
 export const metadata: Metadata = {
-  title: "DM-to-Deal — autonomous AI sales agent for Instagram",
-  description:
-    "Capture warm leads, converse in your voice, book the call, track the revenue — automatically, 24/7.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+    siteName: "DM-to-Deal",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
